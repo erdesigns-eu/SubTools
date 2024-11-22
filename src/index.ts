@@ -337,12 +337,6 @@ try {
             // Update the missing translations
             missingTranslations = missingTranslations.filter((text) => !retryResult.find((t) => t.id === text.id));
         }
-
-        // Log any still missing translations
-        const stillMissing = batchResult.filter((text) => !batch.find((t) => t.id === text.id));
-        if (stillMissing.length > 0) {
-            console.warn(`⚠️ Still missing translations for ${stillMissing.length} text(s) in batch ${index + 1}/${batches.length}.`);
-        }
     }
 
     // Map the translated texts back to the captions and update the captions with the translated text
@@ -352,8 +346,7 @@ try {
 
         // Throw an error if the translation is not found (** Should not happen!! **)
         if (!translatedCaption) {
-            console.log('⚠️ Translation not found for caption ' + caption.id);
-            //throw new Error(`Translation not found for caption ${caption.id}`);
+            throw new Error(`Translation not found for caption ${caption.id}`);
         }
 
         // Return the updated caption with the translated text
