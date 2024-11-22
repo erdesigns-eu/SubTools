@@ -1,0 +1,27 @@
+{
+  "name": "translate-subtitles",
+  "version": "1.0.0",
+  "description": "Translate srt subtitles from one language to another",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node src/index.js"
+  },
+  "keywords": [
+    "srt",
+    "subtitles"
+  ],
+  "author": "Ernst Reidinga",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^22.9.1",
+    "@types/node-fetch": "^2.6.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "readline": "^1.3.0",
+    "srt-parser-2": "^1.2.3"
+  }
+}
