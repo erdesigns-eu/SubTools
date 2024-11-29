@@ -1,4 +1,4 @@
-import { askQuestion, readFile, writeFile, getTranslator, getBatchSize, getConcurrentRequests, getTranslatorSettings, formatDuration } from "../lib/common.js";
+import { askQuestion, createValidator, readFile, writeFile, getTranslator, getBatchSize, getConcurrentRequests, getTranslatorSettings, formatDuration } from "../lib/common.js";
 import type { SRTTranslateMethod } from "../lib/srtTranslator.js";
 import SRTParser from '../lib/srtParser.js';
 import SRTTranslator from '../lib/srtTranslator.js';
@@ -364,8 +364,12 @@ async function all(): Promise<void> {
  * @returns {Promise<void>} Nothing
  */
 export default async function(): Promise<void> {
+    // Error message for invalid input
+    const errorMessage = '🔴 Invalid action selected. Please select either "Translate", "Extract", "Merge", "All" or "Help".';
+    // Validator function
+    const validator = createValidator([1, 2, 3, 4, 5], ['translate', 'extract', 'merge', 'all', 'help']);
     // Ask the user what they want to do
-    const action = await askQuestion('🟣 Select a action (Translate/Extract/Merge/All/Help): ');
+    const action = await askQuestion('🟣 Select a action (Translate/Extract/Merge/All/Help): ', validator, errorMessage);
     // Switch on the action
     switch (action.toLowerCase()) {
         case 'translate':
@@ -386,13 +390,12 @@ export default async function(): Promise<void> {
             break;
         case 'help':
         case '5':
+        default:
             console.log('🟣 1. Translate - Translate a subtitle file to another language.');
             console.log('🟣 2. Extract   - Extract a subtitle file from a video file.');
             console.log('🟣 3. Merge     - Merge a subtitle file with a video file.');
             console.log('🟣 4. All       - Extract the selected subtitle, translate it to the defined language, and merge it with the video.');
             console.log('🟣 4. Help      - Show this help message.');
             break;
-        default:
-            throw new Error('Invalid action selected. Please select either "Translate", "Extract", "Merge", "All" or "Help".');
     }
 }

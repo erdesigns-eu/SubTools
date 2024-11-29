@@ -29,10 +29,26 @@ const rl = readline.createInterface({
 /**
  * Prompts the user with a question and returns the user's input as a Promise.
  * @param query - The question to ask the user.
+ * @param validator - The validator function.
+ * @param errorMessage - The error message to show when the input is invalid.
  * @returns A Promise that resolves with the user's input.
  */
-export function askQuestion(query: string): Promise<string> {
-    return new Promise((resolve) => rl.question(query, resolve));
+export function askQuestion(query: string, validator?: (answer: string) => boolean, errorMessage?: string): Promise<string> {
+    return new Promise((resolve) => {
+        rl.question(query, (answer) => {
+            if (validator && !validator(answer)) {
+                // Display a message if provided
+                if (errorMessage) {
+                    console.log(errorMessage);
+                }
+                // Re-run the question
+                resolve(askQuestion(query, validator, errorMessage));
+            } 
+            else {
+                resolve(answer);
+            }
+        });
+    });
 }
 
 /**
@@ -41,6 +57,18 @@ export function askQuestion(query: string): Promise<string> {
  */
 export function closeRL(): void {
     rl.close();
+}
+
+/**
+ * Create a validator function for the askQuestion function 
+ * @param validNumbers - Valid numbers
+ * @param validStrings - Valid strings
+ * @returns The validator function
+ */
+export function createValidator(validNumbers: number[], validStrings: string[]): (answer: string) => boolean {
+    return (answer: string) => {
+        return validNumbers.map((n) => `${n}`).includes(answer.toLowerCase()) || validStrings.includes(answer.toLowerCase());
+    }
 }
 
 /**

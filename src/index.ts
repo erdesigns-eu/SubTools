@@ -1,4 +1,4 @@
-import header, { askQuestion, closeRL, clearTerminal } from './lib/common.js';
+import header, { askQuestion, createValidator, closeRL, clearTerminal } from './lib/common.js';
 import single from './modes/single.js';
 import multi from './modes/multi.js';
 import settings from './modes/settings.js';
@@ -29,8 +29,12 @@ async function main(): Promise<void> {
     printHeader();
 
     try {
+        // Error message for invalid input
+        const errorMessage = '🔴 Invalid mode selected. Please select either "Single", "Multi", "Settings" or "Help".';
+        // Validator function
+        const validator = createValidator([1, 2, 3, 4], ['single', 'multi', 'settings', 'help']);
         // Ask the user what mode they want to use
-        const mode = await askQuestion('🟣 Select a mode (Single/Multi/Settings/Help): ');
+        const mode = await askQuestion('🟣 Select a mode (Single/Multi/Settings/Help): ', validator, errorMessage);
         switch (mode.toLowerCase()) {
             case 'single':
             case '1':
@@ -46,13 +50,12 @@ async function main(): Promise<void> {
                 break;
             case 'help':
             case '4':
+            default:
                 console.log('🟣 1. Single   - Process a single subtitle or video file.');
                 console.log('🟣 2. Multi    - Process multiple subtitles or video files.');
                 console.log('🟣 3. Settings - Change the application settings.');
                 console.log('🟣 4. Help     - Show this help message.');
                 break;
-            default:
-                throw new Error('Invalid mode selected. Please select either "Single", "Multi", "Settings" or "Help".');
         }
     }
     catch (error: any) {
