@@ -32,7 +32,7 @@ async function main(): Promise<void> {
         // Error message for invalid input
         const errorMessage = '🔴 Invalid mode selected. Please select either "Single", "Multi", "Settings" or "Help".';
         // Validator function
-        const validator = createValidator([1, 2, 3, 4], ['single', 'multi', 'settings', 'help']);
+        const validator = createValidator(['single', 'multi', 'settings', 'help']);
         // Ask the user what mode they want to use
         const mode = await askQuestion('🟣 Select a mode (Single/Multi/Settings/Help): ', validator, errorMessage);
         switch (mode.toLowerCase()) {

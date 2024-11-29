@@ -167,7 +167,7 @@ export default async function(): Promise<void> {
     // Error message for invalid input
     const errorMessage = '🔴 Invalid mode selected. Please select either "Translator", "OpenAI", "Google AI", "Deepl" or "Help".';
     // Validator function
-    const validator = createValidator([1, 2, 3, 4, 5], ['translator', 'openai', 'googleai', 'google ai', 'deepl', 'help']);
+    const validator = createValidator(['translator', 'openai', 'googleai', 'google ai', 'deepl', 'help']);
     // Ask the user what they want to do
     const action = await askQuestion('🟣 Select a setting (Translator, OpenAI, Google AI, Deepl, or Help): ', validator, errorMessage);
     // Switch on the action

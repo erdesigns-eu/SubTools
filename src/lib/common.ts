@@ -65,9 +65,9 @@ export function closeRL(): void {
  * @param validStrings - Valid strings
  * @returns The validator function
  */
-export function createValidator(validNumbers: number[], validStrings: string[]): (answer: string) => boolean {
+export function createValidator(valid: string[]): (answer: string) => boolean {
     return (answer: string) => {
-        return validNumbers.map((n) => `${n}`).includes(answer.toLowerCase()) || validStrings.includes(answer.toLowerCase());
+        return valid.map((_, i) => `${i}`).includes(answer.toLowerCase()) || valid.includes(answer.toLowerCase());
     }
 }
 

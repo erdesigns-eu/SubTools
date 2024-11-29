@@ -367,7 +367,7 @@ export default async function(): Promise<void> {
     // Error message for invalid input
     const errorMessage = '🔴 Invalid action selected. Please select either "Translate", "Extract", "Merge", "All" or "Help".';
     // Validator function
-    const validator = createValidator([1, 2, 3, 4, 5], ['translate', 'extract', 'merge', 'all', 'help']);
+    const validator = createValidator(['translate', 'extract', 'merge', 'all', 'help']);
     // Ask the user what they want to do
     const action = await askQuestion('🟣 Select a action (Translate/Extract/Merge/All/Help): ', validator, errorMessage);
     // Switch on the action
