@@ -14,11 +14,10 @@ const translators: string[] = ['OpenAI', 'Google AI', 'DeepL', 'Google Translate
  * @returns {Promise<void>} Nothing
  */
 async function translator(): Promise<void> {
-    const translator = await askQuestion(`🟣 Select a translator (${translators.join(', ')}): `);
+    const translatorValidator = createValidator(translators.map((t) => t.toLowerCase()));
+    const translator = await askQuestion(`🟣 Select a translator (${translators.join(', ')}): `, translatorValidator, `🔴 Invalid translator selected. Please select one of the following: ${translators.join(', ')}`);
     
     let lowercaseTranslator = translator.toLowerCase();
-    const lowercaseTranslators = translators.map((t) => t.toLowerCase());
-    
     const translatorIndex = parseInt(translator, 10);
     const translatorByIndex = translators[translatorIndex - 1];
     
@@ -26,34 +25,17 @@ async function translator(): Promise<void> {
         lowercaseTranslator = translatorByIndex.toLowerCase();
     }
 
-    if (!translator) {
-        throw new Error('No translator selected.');
+    const batchSizeValidator = (answer: string) => {
+        const answerNumber = parseInt(answer, 10);
+        return !isNaN(answerNumber) && answerNumber >= 1 && answerNumber <= 2500;
     }
-    if (!lowercaseTranslators.includes(lowercaseTranslator)) {
-        throw new Error(`Invalid translator selected. Please select one of the following: ${translators.join(', ')}`);
-    }
+    const batchSize = parseInt(await askQuestion('🟣 Enter the batch size: ', batchSizeValidator, `🔴 Invalid batch size provided. Batch size must be between 1 and 2500.`), 10);
 
-    const batchSize = parseInt(await askQuestion('🟣 Enter the batch size: '), 10);
-    if (!batchSize) {
-        throw new Error('No batch size provided.');
+    const concurrentRequestsValidator = (answer: string) => {
+        const answerNumber = parseInt(answer, 10);
+        return !isNaN(answerNumber) && answerNumber >= 1 && answerNumber <= 25;
     }
-    if (isNaN(batchSize)) {
-        throw new Error('Invalid batch size provided.');
-    }
-    if (batchSize < 1 || batchSize > 2500) {
-        throw new Error('Batch size must be between 1 and 2500.');
-    }
-
-    const concurrentRequests = parseInt(await askQuestion('🟣 Enter the number of concurrent requests: '), 10);
-    if (!concurrentRequests) {
-        throw new Error('No number of concurrent requests provided.');
-    }
-    if (isNaN(concurrentRequests)) {
-        throw new Error('Invalid number of concurrent requests provided.');
-    }
-    if (concurrentRequests < 1 || concurrentRequests > 25) {
-        throw new Error('Number of concurrent requests must be between 1 and 25.');
-    }
+    const concurrentRequests = parseInt(await askQuestion('🟣 Enter the number of concurrent requests: ', concurrentRequestsValidator, `🔴 Invalid number of concurrent requests provided. Number of concurrent requests must be between 1 and 25.`), 10);
 
     // Read the current settings
     const storedSettings = await readSettings();
@@ -75,18 +57,11 @@ async function translator(): Promise<void> {
  * @returns {Promise<void>} Nothing
  */
 async function openai(): Promise<void> {
-    const apiKey = await askQuestion('🟣 Enter the OpenAI API Key: ');
-    if (!apiKey) {
-        throw new Error('No API Key provided.');
-    }
+    const apiKeyValidator = (answer: string) => /^sk-[A-Za-z0-9]{32,40}$/.test(answer);
+    const apiKey = await askQuestion('🟣 Enter the OpenAI API Key: ', apiKeyValidator, '🔴 Invalid API Key provided. Please provide a valid OpenAI API Key.');
 
-    const model = await askQuestion('🟣 Enter the OpenAI Model: ')
-    if (!model) {
-        throw new Error('No Model provided.');
-    }
-    if (!openAIModels.includes(model as OpenAIModel)) {
-        throw new Error(`Invalid model selected. Please select one of the following: ${openAIModels.join(', ')}`);
-    }
+    const modelValidator = (answer: string) => openAIModels.includes(answer.toLowerCase() as OpenAIModel);
+    const model = await askQuestion('🟣 Enter the OpenAI Model: ', modelValidator, `🔴 Invalid model selected. Please select one of the following: ${openAIModels.join(', ')}`)
 
     // Read the current settings
     const storedSettings = await readSettings();
@@ -108,15 +83,11 @@ async function openai(): Promise<void> {
  * @returns {Promise<void>} Nothing
  */
 async function googleAI(): Promise<void> {
-    const apiKey = await askQuestion('🟣 Enter the Google AI API Key: ');
-    if (!apiKey) {
-        throw new Error('No API Key provided.');
-    }
+    const apiKeyValidator = (answer: string) => /^[A-Za-z0-9_-]{35,50}$/.test(answer);
+    const apiKey = await askQuestion('🟣 Enter the Google AI API Key: ', apiKeyValidator, '🔴 Invalid API Key provided. Please provide a valid Google AI API Key.');
 
-    const model = await askQuestion('🟣 Enter the Google AI Model: ')
-    if (!model) {
-        throw new Error('No Model provided.');
-    }
+    const modelValidator = (answer: string) => answer.trim().length > 0;
+    const model = await askQuestion('🟣 Enter the Google AI Model: ', modelValidator, `🔴 Invalid model selected.`)
     // Check if the model is valid
     // TODO
 
@@ -140,10 +111,8 @@ async function googleAI(): Promise<void> {
  * @returns {Promise<void>} Nothing
  */
 async function deepL(): Promise<void> {
-    const apiKey = await askQuestion('🟣 Enter the DeepL API Key: ');
-    if (!apiKey) {
-        throw new Error('No API Key provided.');
-    }
+    const apiKeyValidator = (answer: string) => /^DEEPL-API(-FREE)?-[A-Za-z0-9]{30,40}$/.test(answer);
+    const apiKey = await askQuestion('🟣 Enter the DeepL API Key: ',apiKeyValidator, '🔴 Invalid API Key provided. Please provide a valid DeepL API Key.');
 
     // Read the current settings
     const storedSettings = await readSettings();
@@ -191,13 +160,12 @@ export default async function(): Promise<void> {
             break;
         case 'help':
         case '5':
+        default:
             console.log('🟣 1. Translator - Change the translator that is used for translating subtitles.');
             console.log('🟣 2. OpenAI     - Change the OpenAI API settings.');
             console.log('🟣 3. Google AI  - Change the Google AI API settings.');
             console.log('🟣 4. DeepL      - Change the DeepL API settings.');
             console.log('🟣 4. Help       - Show this help message.');
             break;
-        default:
-            throw new Error('Invalid setting selected. Please select either "Translator", "OpenAI", "Google AI", "DeepL" or "Help".');
     }
 }

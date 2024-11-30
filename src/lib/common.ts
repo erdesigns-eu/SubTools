@@ -72,6 +72,33 @@ export function createValidator(valid: string[]): (answer: string) => boolean {
 }
 
 /**
+ * Check if a file exists.
+ * @param filename - The file to check.
+ * @returns True if the file exists, false otherwise.
+ */
+export async function fileExists(filename: string): Promise<boolean> {
+    return new Promise((resolve) => {
+        fs.access(filename, fs.constants.F_OK, (error) => {
+            if (error) {
+                resolve(false);
+            }
+            else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+/**
+ * Check if a file exists.
+ * @param filename - The file to check.
+ * @returns True if the file exists, false otherwise.
+ */
+export function fileExistsSync(filename: string): boolean {
+    return fs.existsSync(filename);
+}
+
+/**
  * Read a file from disk.
  * @param {string} filename - The name of the file to read.
  * @returns {Promise<string>} The contents of the file as a string.

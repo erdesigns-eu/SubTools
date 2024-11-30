@@ -1,4 +1,4 @@
-import { askQuestion, createValidator, readFile, writeFile, getTranslator, getBatchSize, getConcurrentRequests, getTranslatorSettings, formatDuration } from "../lib/common.js";
+import { askQuestion, createValidator, fileExistsSync, readFile, writeFile, getTranslator, getBatchSize, getConcurrentRequests, getTranslatorSettings, formatDuration } from "../lib/common.js";
 import type { SRTTranslateMethod } from "../lib/srtTranslator.js";
 import SRTParser from '../lib/srtParser.js';
 import SRTTranslator from '../lib/srtTranslator.js';
@@ -11,23 +11,14 @@ import SRTOpenAI from '../translators/srtOpenAI.js';
  * @returns {void} Nothing
  */
 async function translate(): Promise<void> {
-    const filename = await askQuestion('🟣 Enter the filename of the subtitle file: ');
-    if (!filename) {
-        throw new Error('No filename provided.');
-    }
-    if (!filename.endsWith('.srt')) {
-        throw new Error('Invalid file extension. Please provide a .srt file.');
-    }
+    const filenameValidator = (answer: string) => fileExistsSync(answer) && answer.toLocaleLowerCase().endsWith('.srt');
+    const filename = await askQuestion('🟣 Enter the filename of the subtitle file: ', filenameValidator, '🔴 Please provide a valid SubRip subtitle (srt) file.');
 
-    const sourceLanguage = await askQuestion('🟣 Enter the source language (e.g. en): ');
-    if (!sourceLanguage) {
-        throw new Error('No source language provided.');
-    }
-
-    const targetLanguage = await askQuestion('🟣 Enter the target language (e.g. nl): ')
-    if (!targetLanguage) {
-        throw new Error('No target language provided.');
-    }
+    const sourceLanguageValidator = (answer: string) => answer.trim().length > 0;
+    const sourceLanguage = await askQuestion('🟣 Enter the source language (e.g. en): ', sourceLanguageValidator, '🔴 Please provide a valid source language.');
+    
+    const targetLanguageValidator = (answer: string) => answer.trim().length > 0;
+    const targetLanguage = await askQuestion('🟣 Enter the target language (e.g. nl): ', targetLanguageValidator, '🔴 Please provide a target source language.')
 
     // Create a new SRTParser instance
     const parser = new SRTParser();
@@ -108,13 +99,8 @@ async function translate(): Promise<void> {
  * @returns {void} Nothing
  */
 async function extract(): Promise<void> {
-    const filename = await askQuestion('🟣 Enter the filename of the video file: ');
-    if (!filename) {
-        throw new Error('No filename provided.');
-    }
-    if (!filename.endsWith('.mp4') && !filename.endsWith('.mkv')) {
-        throw new Error('Invalid file extension. Please provide a .mp4 or .mkv file.');
-    }
+    const filenameValidator = (answer: string) => fileExistsSync(answer) && (answer.toLocaleLowerCase().endsWith('.mp4') || answer.toLocaleLowerCase().endsWith('.mkv'));
+    const filename = await askQuestion('🟣 Enter the filename of the video file: ', filenameValidator, '🔴 Please provide a valid video (mp4, mkv) file.');
 
     // Get the filename without the extension
     const filenameWithoutExtension = filename.replace(/\.[^/.]+$/, '');
@@ -137,15 +123,9 @@ async function extract(): Promise<void> {
     const firstIndex = subtitles[0].index;
     const lastIndex = subtitles[subtitles.length - 1].index;
 
-    const selection = await askQuestion('🟣 Select a subtitle to extract: ');
-    if (!selection) {
-        throw new Error('No subtitle selected.');
-    }
-    
+    const selectionValidator = createValidator(Array.from({ length: lastIndex - firstIndex + 1 }, (_, i) => `${firstIndex + i}`));
+    const selection = await askQuestion('🟣 Select a subtitle to extract: ', selectionValidator, `🔴 Invalid subtitle selected. Please select a number between ${firstIndex} and ${lastIndex}.`);
     const subtitle = parseInt(selection, 10);
-    if (isNaN(subtitle) || subtitle < firstIndex || subtitle > lastIndex) {
-        throw new Error(`Invalid subtitle selected. Please select a number between ${firstIndex} and ${lastIndex}.`);
-    }
 
     // Get the language of the subtitle
     const language = subtitles.find((s) => s.index === subtitle)?.language ?? 'unknown';
@@ -167,26 +147,14 @@ async function extract(): Promise<void> {
  * @returns {void} Nothing
  */
 async function merge(): Promise<void> {
-    const videoFilename = await askQuestion('🟣 Enter the filename of the video file: ');
-    if (!videoFilename) {
-        throw new Error('No filename provided.');
-    }
-    if (!videoFilename.endsWith('.mp4') && !videoFilename.endsWith('.mkv')) {
-        throw new Error('Invalid file extension. Please provide a .mp4 or .mkv file.');
-    }
+    const filenameValidator = (answer: string) => fileExistsSync(answer) && (answer.toLocaleLowerCase().endsWith('.mp4') || answer.toLocaleLowerCase().endsWith('.mkv'));
+    const videoFilename = await askQuestion('🟣 Enter the filename of the video file: ', filenameValidator, '🔴 Please provide a valid video (mp4, mkv) file.');
 
-    const subtitleFilename = await askQuestion('🟣 Enter the filename of the subtitle file: ');
-    if (!subtitleFilename) {
-        throw new Error('No filename provided.');
-    }
-    if (!subtitleFilename.endsWith('.srt')) {
-        throw new Error('Invalid file extension. Please provide a .srt file.');
-    }
-
-    const subtitleLanguage = await askQuestion('🟣 Enter the language of the subtitle (e.g. en, nl): ');
-    if (!subtitleLanguage) {
-        throw new Error('No language provided.');
-    }
+    const subtitleFilenameValidator = (answer: string) => fileExistsSync(answer) && answer.toLocaleLowerCase().endsWith('.srt');
+    const subtitleFilename = await askQuestion('🟣 Enter the filename of the subtitle file: ', subtitleFilenameValidator, '🔴 Please provide a valid SubRip subtitle (srt) file.');
+    
+    const subtitleLanguageValidator = (answer: string) => answer.toLocaleLowerCase().length > 0;
+    const subtitleLanguage = await askQuestion('🟣 Enter the language of the subtitle (e.g. en, nl): ', subtitleLanguageValidator, '🔴 Please provide a valid subtitle language (e.g. en, nl, fr)');
 
     // Create a new SRTMerger instance
     const merger = new SRTMerger(videoFilename);
@@ -226,13 +194,8 @@ async function merge(): Promise<void> {
  * @returns {Promise<void>} Nothing
  */
 async function all(): Promise<void> {
-    const filename = await askQuestion('🟣 Enter the filename of the video file: ');
-    if (!filename) {
-        throw new Error('No filename provided.');
-    }
-    if (!filename.endsWith('.mp4') && !filename.endsWith('.mkv')) {
-        throw new Error('Invalid file extension. Please provide a .mp4 or .mkv file.');
-    }
+    const filenameValidator = (answer: string) => fileExistsSync(answer) && (answer.toLocaleLowerCase().endsWith('.mp4') || answer.toLocaleLowerCase().endsWith('.mkv'));
+    const filename = await askQuestion('🟣 Enter the filename of the video file: ', filenameValidator, '🔴 Please provide a valid video (mp4, mkv) file.');
 
     // Record the start time of the process to calculate the duration later
     const startTime: number = Date.now();
@@ -255,25 +218,17 @@ async function all(): Promise<void> {
     const firstIndex = subtitles[0].index;
     const lastIndex = subtitles[subtitles.length - 1].index;
 
-    const selection = await askQuestion('🟣 Select a subtitle to translate: ');
-    if (!selection) {
-        throw new Error('No subtitle selected.');
-    }
-    
+    const selectionValidator = createValidator(Array.from({ length: lastIndex - firstIndex + 1 }, (_, i) => `${firstIndex + i}`));
+    const selection = await askQuestion('🟣 Select a subtitle to translate: ', selectionValidator, `🔴 Invalid subtitle selected. Please select a number between ${firstIndex} and ${lastIndex}.`);
     const subtitle = parseInt(selection, 10);
-    if (isNaN(subtitle) || subtitle < firstIndex || subtitle > lastIndex) {
-        throw new Error(`Invalid subtitle selected. Please select a number between ${firstIndex} and ${lastIndex}.`);
-    }
 
     // Get the language of the subtitle
     const sourceLanguage = subtitles.find((s) => s.index === subtitle)?.language ?? 'unknown';
     // Extract the selected subtitle
     const srtContent = await extractor.extractSubtitle(sourceLanguage);
     
-    const targetLanguage = await askQuestion('🟣 Enter the target language (e.g. nl): ')
-    if (!targetLanguage) {
-        throw new Error('No target language provided.');
-    }
+    const targetLanguageValidator = (answer: string) => answer.toLocaleLowerCase().length > 0;
+    const targetLanguage = await askQuestion('🟣 Enter the target language of the subtitle (e.g. en, nl): ', targetLanguageValidator, '🔴 Please provide a valid subtitle language (e.g. en, nl, fr)');
 
     // Create a new SRTParser instance
     const parser = new SRTParser();

@@ -16,6 +16,8 @@ function printHeader(): void {
     console.log('Author...: Ernst Reidinga - ERDesigns');
     // Print the version of the application
     console.log('Version..: 1.0.0');
+    // Print the date of the release
+    console.log('Date.....: 30/11/2024')
     // Print a newline
     console.log();
 }
@@ -68,3 +70,4 @@ async function main(): Promise<void> {
 
 // Call the main function
 await main();
+  
